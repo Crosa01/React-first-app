@@ -55,7 +55,7 @@ const addUser = (user) => {
 
 const deleteUser = (user) => {
     const userId = users['users_list'].indexOf(user);
-    users['users_list'].splice(userId, 1)
+    return users['users_list'].splice(userId, 1)
 }
 
 app.use(cors());
@@ -79,22 +79,6 @@ app.get('/users', (req, res) => {
     }
 });
 
-app.get('/users', (req, res) => {
-    const name = req.params.name;
-    const job = req.params.job;
-    console.dir(req.path)
-    console.dir(name)
-    console.dir(job)
-    if (name !== undefined && job !== undefined){
-        let result = findUserByNameAndJob(name, job);
-        result = {users_list: result};
-        res.send(result);
-    }
-    else{
-        res.send(users);
-    }
-});
-
 app.get('/users/:id', (req, res) => {
     const id = req.params['id']; //or req.params.id
     let result = findUserById(id);
@@ -106,14 +90,27 @@ app.get('/users/:id', (req, res) => {
 });
 
 app.post('/users', (req, res) => {
+    const name = req.body.name
+    if (name.length >= 3) {
+        req.body.id = name.substring(0, 3) + Math.round(Math.random() * 1000).toString();
+    }
+    else {
+        req.body.id = name + Math.round(Math.random() * 1000).toString();
+    }
     const userToAdd = req.body;
     addUser(userToAdd);
-    res.send();
+    //console.log({name: userToAdd.name});
+    res.status(201).json(userToAdd);
 });
 
-app.delete('/users', (req) => {
+app.delete('/users', (req, res) => {
     const userToDelete = req.body;
-    deleteUser(userToDelete);
+    let result = deleteUser(userToDelete);
+    if (result === undefined) {
+        res.status(404).send('Resource not found.');
+    } else {
+        res.sendStatus(204);
+    }
 });
 
 app.listen(port, () => {
